@@ -108,28 +108,24 @@ function M.runBookmark(entry)
 		return true
 	end
 
-	local finalCmd = cmd
+	local ok
 	if M.parseBool(entry.runInBackground) then
-		finalCmd = "nohup " .. cmd .. " >/dev/null 2>&1 &"
-	end
-
-	local ok = noctalia.runAsync(finalCmd, function(result)
-		if M.parseBool(entry.runInBackground) then
-			return
-		end
-
-		if result.exitCode ~= 0 then
-			local detail = noctalia.string.trim(result.stderr or "")
-			local msg = noctalia.tr(
-				"err.exit_code",
-				{ label = label, code = tostring(result.exitCode) }
-			)
-			if detail ~= "" then
-				msg = msg .. ": " .. detail
+		ok = noctalia.runAsync(cmd)
+	else
+		ok = noctalia.runAsync(cmd, function(result)
+			if result.exitCode ~= 0 then
+				local detail = noctalia.string.trim(result.stderr or "")
+				local msg = noctalia.tr(
+					"err.exit_code",
+					{ label = label, code = tostring(result.exitCode) }
+				)
+				if detail ~= "" then
+					msg = msg .. ": " .. detail
+				end
+				noctalia.notifyError(noctalia.tr("title"), msg)
 			end
-			noctalia.notifyError(noctalia.tr("title"), msg)
-		end
-	end)
+		end)
+	end
 
 	if not ok then
 		noctalia.notifyError(

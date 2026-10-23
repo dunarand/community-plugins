@@ -16,7 +16,6 @@ and a shell command to execute. You can backup your bookmarks as well!
 ## Requirements
 
 - Noctalia v5.3.0 or higher
-- `nohup` (Optional): For "Run in background" wrapper toggle
 
 ## IPC & Keybinds
 
@@ -35,20 +34,20 @@ and a shell command to execute. You can backup your bookmarks as well!
 
 You can interact with the bookmarks list via keybinds:
 
-| Keybind                                | Purpose                                                          |
-| -------------------------------------- | ---------------------------------------------------------------- |
-| `CTRL + J` or Down Arrow               | Select the next (below) item                                     |
-| `CTRL + K` or Up Arrow                 | Select the previous (above) item                                 |
-| `CTRL + H` or Left Arrow               | Return to the root level when in a folder                        |
-| `CTRL + L` or Right Arrow              | Get into a folder                                                |
-| `CTRL + F`                             | Search bookmarks                                                 |
-| `CTRL + N`                             | New bookmark                                                     |
-| `CTRL + SHIFT + N`                     | New folder                                                       |
-| `CTRL + E`                             | Edit the selected bookmark or folder                             |
-| `CTRL + D`                             | Delete the selected bookmark or folder                           |
-| `CTRL + SHIFT + K` or Shift + Up Arrow | Move the selected item one up                                    |
-| `CTRL + SHIFT + J` or Shift + Down Arrow | Move the selected item one down                                |
-| `Enter` / `Return`                     | Execute the selected bookmark's command / Navigate into a folder |
+| Keybind                                  | Purpose                                                          |
+| ---------------------------------------- | ---------------------------------------------------------------- |
+| `CTRL + J` or Down Arrow                 | Select the next (below) item                                     |
+| `CTRL + K` or Up Arrow                   | Select the previous (above) item                                 |
+| `CTRL + H` or Left Arrow                 | Return to the root level when in a folder                        |
+| `CTRL + L` or Right Arrow                | Get into a folder                                                |
+| `CTRL + F`                               | Search bookmarks                                                 |
+| `CTRL + N`                               | New bookmark                                                     |
+| `CTRL + SHIFT + N`                       | New folder                                                       |
+| `CTRL + E`                               | Edit the selected bookmark or folder                             |
+| `CTRL + D`                               | Delete the selected bookmark or folder                           |
+| `CTRL + SHIFT + K` or Shift + Up Arrow   | Move the selected item one up                                    |
+| `CTRL + SHIFT + J` or Shift + Down Arrow | Move the selected item one down                                  |
+| `Enter` / `Return`                       | Execute the selected bookmark's command / Navigate into a folder |
 
 ## Usage
 
@@ -72,16 +71,9 @@ hl.bind(
 
   ![](./assets/preview-2.png)
 
-  - "Run in background" toggle wraps the command you defined in the following way:
+  - "Run in background" toggle runs the bookmark command as a detached background process that outlives the bookmarks panel, without waiting for the command to finish.
 
-    `nohup <bookmark-command> >/dev/null 2>&1 &`
-
-    For example, instead of typing the whole command
-
-    `nohup xdg-open "$HOME" >/dev/null 2>&1 &`
-
-    each time, you can instead define the command as `xdg-open "$HOME"` and toggle "Run in
-    background" switch.
+    For example, for a command like `xdg-open "$HOME"`, toggling "Run in background" will launch the application independently in the background.
 
   - "Run in terminal" switch executes the command with the default terminal. These switches are
     mutually exclusive so you can only choose one. Toggling on a switch will result the other to
@@ -205,8 +197,8 @@ The plugin itself has the following settings:
 ### v1.3.1
 
 - Fixed a bug where hovering over a bookmark would trigger scrolling event in populated lists
-    - It was also causing the scroll bar to render incorrectly
-    - The fix introduces a new bug where navigating items via keybinds doesn't trigger scrolling.
+  - It was also causing the scroll bar to render incorrectly
+  - The fix introduces a new bug where navigating items via keybinds doesn't trigger scrolling.
     This issue will be fixed in future
 
 ### v1.3.2
