@@ -206,7 +206,7 @@ local function insertionGap(anchorIndex, place)
 		accepts = { "bookmark-entry" },
 		value = place .. "|" .. anchorIndex,
 		onDrop = "_onReorderEntry",
-		height = 6,
+		height = 2,
 		expandOnDrag = true,
 		hitSlop = 20,
 	})
@@ -216,12 +216,7 @@ end
 -- target: dropping a bookmark onto it files that bookmark into the folder,
 -- appended at the end. `value` is "into|<folderIndex>", read by
 -- _onReorderEntry alongside the "before|after" insertion-gap values already
--- in use for same-list reordering. `hitSlop` matters here: the insertion
--- gaps immediately above/below this row extend their own hit area well
--- past their thin visible strip (see insertionGap), so without a
--- competing hitSlop of its own this zone would rarely win a drop even
--- when the pointer is squarely over the folder row - "closest wins" needs
--- both zones actually in the running.
+-- in use for same-list reordering.
 local function folderDropTarget(folderIndex, child)
 	return ui.dropZone({
 		key = "into-" .. folderIndex,
@@ -229,10 +224,6 @@ local function folderDropTarget(folderIndex, child)
 		value = "into|" .. folderIndex,
 		onDrop = "_onReorderEntry",
 		direction = "column",
-		radius = 8,
-		border = "primary/0.45",
-		borderWidth = 1.5,
-		expandOnDrag = true,
 		hitSlop = 20,
 	}, { child })
 end
@@ -337,6 +328,9 @@ local function entryRow(entry, index)
 				glyph = "chevron-right",
 				variant = "ghost",
 				controlSize = "sm",
+				width = 22,
+				height = 22,
+				glyphSize = 13,
 				tooltip = noctalia.tr("open_tooltip"),
 				onClick = function()
 					_onOpenFolder(index)
@@ -349,8 +343,11 @@ local function entryRow(entry, index)
 			ui.button({
 				key = "entry-edit-" .. index,
 				glyph = "pencil",
-				variant = "secondary",
+				variant = "ghost",
 				controlSize = "sm",
+				width = 22,
+				height = 22,
+				glyphSize = 13,
 				tooltip = noctalia.tr("edit.edit_tooltip"),
 				onClick = function()
 					_onEditEntry(index)
@@ -359,8 +356,11 @@ local function entryRow(entry, index)
 			ui.button({
 				key = "entry-del-" .. index,
 				glyph = "trash",
-				variant = "destructive",
+				variant = "ghost",
 				controlSize = "sm",
+				width = 22,
+				height = 22,
+				glyphSize = 13,
 				tooltip = noctalia.tr("edit.delete_tooltip"),
 				onClick = function()
 					_onDeleteEntry(index)
@@ -378,30 +378,11 @@ local function entryRow(entry, index)
 		end
 	end
 
-	-- In edit mode a folder's glyph sits in a filled chip rather than bare,
-	-- the same visual language as the move-to-root drop bar (filled
-	-- primary/border), so "this accepts a dropped bookmark" reads at a
-	-- glance instead of only revealing itself once a drag is already
-	-- underway and the host's own highlight kicks in.
-	-- Note: ui.box does not render child content (its documented props are
-	-- fill/radius/border/size only), so the chip wrapper uses ui.row -
-	-- which supports both children and the same fill/radius styling - with
-	-- align/justify = "center" to center the glyph inside it.
 	local folderGlyph = ui.glyph({
 		name = entry.glyph or (isFolder and "folder" or "bookmark"),
 		size = 16,
-		color = (isFolder and editMode) and "primary" or "on_surface",
+		color = "on_surface",
 	})
-	if isFolder and editMode then
-		folderGlyph = ui.row({
-			fill = "primary/0.12",
-			radius = 6,
-			width = 24,
-			height = 24,
-			align = "center",
-			justify = "center",
-		}, { folderGlyph })
-	end
 
 	-- Flat, single-level row: grip, glyph, label, and trailing controls are
 	-- all direct children of "bm-<index>", the same node that sits as a
@@ -759,7 +740,7 @@ local function listView()
 			ui.scroll({
 				key = "list-scroll-" .. tostring(currentFolder or 0),
 				flexGrow = 1,
-				gap = 2,
+				gap = editMode and 0 or 2,
 				revealKey = revealKey,
 			}, rows)
 		)
