@@ -301,6 +301,24 @@ local function activateRow(row)
 	end
 end
 
+local function bookmarkTooltip(entry)
+	if entryType(entry) == "folder" then
+		return nil
+	end
+	local description = noctalia.string.trim(entry.description or "")
+	local cmd = noctalia.string.trim(entry.cmd or "")
+	if description ~= "" and cmd ~= "" then
+		return noctalia.tr("info.description_line", { description = description })
+			.. "\n"
+			.. noctalia.tr("info.cmd_line", { cmd = cmd })
+	elseif description ~= "" then
+		return noctalia.tr("info.description_line", { description = description })
+	elseif cmd ~= "" then
+		return noctalia.tr("info.cmd_line", { cmd = cmd })
+	end
+	return nil
+end
+
 local function entryRow(entry, index)
 	local isFolder = entryType(entry) == "folder"
 
@@ -316,25 +334,6 @@ local function entryRow(entry, index)
 				onClick = function()
 					_onOpenFolder(index)
 				end,
-			})
-		)
-	elseif not editMode and parseBool(noctalia.getConfig("show_info_button")) then
-		local description = noctalia.string.trim(entry.description or "")
-		local cmd = entry.cmd or ""
-		local infoTooltip = noctalia.tr("info.cmd_line", { cmd = cmd })
-		if description ~= "" then
-			infoTooltip = infoTooltip
-				.. "\n"
-				.. noctalia.tr("info.description_line", { description = description })
-		end
-		table.insert(
-			trailing,
-			ui.button({
-				glyph = "help-circle",
-				variant = "ghost",
-				controlSize = "sm",
-				tooltip = infoTooltip,
-				onClick = function() end,
 			})
 		)
 	end
@@ -445,6 +444,7 @@ local function entryRow(entry, index)
 		gap = 8,
 		align = "center",
 		height = 30,
+		tooltip = not editMode and bookmarkTooltip(entry) or nil,
 		onClick = activateEntry,
 		onHover = function(state)
 			if state == "true" then
@@ -480,7 +480,6 @@ local function searchResultRow(result, rowIndex)
 			glyphSize = 16,
 			width = 24,
 			height = 24,
-			tooltip = entry.cmd,
 			onClick = runEntry,
 		}),
 		ui.label({
@@ -509,6 +508,7 @@ local function searchResultRow(result, rowIndex)
 		gap = 8,
 		align = "center",
 		height = 30,
+		tooltip = bookmarkTooltip(entry),
 		onClick = runEntry,
 		onHover = function(state)
 			if state == "true" then

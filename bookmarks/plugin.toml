@@ -16,13 +16,6 @@ label_key       = "settings.data_path.label"
 description_key = "settings.data_path.description"
 default         = ""
 extensions      = [".json"]
- 
-[[setting]]
-key             = "show_info_button"
-type            = "bool"
-label_key       = "settings.show_info_button.label"
-description_key = "settings.show_info_button.description"
-default         = true
 
 [[widget]]
 id    = "bar"

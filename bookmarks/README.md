@@ -177,7 +177,6 @@ The plugin itself has the following settings:
 | Setting              | Type     | Default     | Description                                                                           |
 | -------------------- | -------- | ----------- | ------------------------------------------------------------------------------------- |
 | `data_path`          | `file`   |             | data.json file to store the saved bookmarks. Leave empty to use the default location. |
-| `show_info_button`   | `bool`   | `true`      | Shows the "?" tooltip button on the bookmark entries.                                 |
 | `enable_bk_provider` | `bool`   | `true`      | Enable bookmarks launcher provider                                                    |
 | `bk_sort_by`         | `select` | `"history"` | Provider's sorting strategy. Options: `"history"`, `"usage_count"`                    |
 
