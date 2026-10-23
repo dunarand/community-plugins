@@ -557,6 +557,26 @@ local function listView()
 						maxLines = 1,
 					}),
 				}),
+				ui.button({
+					key = "toggle-edit-mode",
+					glyph = editMode and "eye" or "eye-off",
+					variant = "ghost",
+					controlSize = "sm",
+					width = 32,
+					tooltip = noctalia.tr(
+						editMode and "edit.hide_controls_tooltip" or "edit.show_controls_tooltip"
+					),
+					onClick = "_onToggleEditMode",
+				}),
+				ui.button({
+					key = "open-settings",
+					glyph = "settings",
+					variant = "ghost",
+					controlSize = "sm",
+					width = 32,
+					tooltip = noctalia.tr("settings_tooltip"),
+					onClick = "_onOpenSettings",
+				}),
 			})
 		)
 	end
@@ -566,14 +586,37 @@ local function listView()
 		focusSearchOnRender = false
 		table.insert(
 			children,
-			ui.input({
-				key = "search-input-" .. searchRev,
-				value = searchQuery,
-				placeholder = noctalia.tr("search_placeholder"),
-				controlSize = "sm",
-				focus = wantsFocus,
-				onChange = "_onSearchChanged",
-				onSubmit = "_onSearchSubmit",
+			ui.row({ gap = 8, align = "center" }, {
+				ui.input({
+					key = "search-input-" .. searchRev,
+					value = searchQuery,
+					placeholder = noctalia.tr("search_placeholder"),
+					controlSize = "sm",
+					flexGrow = 1,
+					focus = wantsFocus,
+					onChange = "_onSearchChanged",
+					onSubmit = "_onSearchSubmit",
+				}),
+				ui.button({
+					key = "toggle-edit-mode",
+					glyph = editMode and "eye" or "eye-off",
+					variant = "ghost",
+					controlSize = "sm",
+					width = 32,
+					tooltip = noctalia.tr(
+						editMode and "edit.hide_controls_tooltip" or "edit.show_controls_tooltip"
+					),
+					onClick = "_onToggleEditMode",
+				}),
+				ui.button({
+					key = "open-settings",
+					glyph = "settings",
+					variant = "ghost",
+					controlSize = "sm",
+					width = 32,
+					tooltip = noctalia.tr("settings_tooltip"),
+					onClick = "_onOpenSettings",
+				}),
 			})
 		)
 	end
@@ -639,21 +682,6 @@ local function listView()
 			})
 		)
 	end
-
-	table.insert(
-		topButtons,
-		ui.button({
-			key = "toggle-edit-mode",
-			glyph = editMode and "eye" or "eye-off",
-			variant = "ghost",
-			controlSize = "sm",
-			width = 32,
-			tooltip = noctalia.tr(
-				editMode and "edit.hide_controls_tooltip" or "edit.show_controls_tooltip"
-			),
-			onClick = "_onToggleEditMode",
-		})
-	)
 
 	table.insert(children, ui.row({ gap = 8 }, topButtons))
 
@@ -1144,6 +1172,10 @@ end
 function _onToggleEditMode()
 	editMode = not editMode
 	render()
+end
+
+function _onOpenSettings()
+	noctalia.openSettings()
 end
 
 function _onSearchChanged(value)
