@@ -587,15 +587,31 @@ local function listView()
 		table.insert(
 			children,
 			ui.row({ gap = 8, align = "center" }, {
-				ui.input({
-					key = "search-input-" .. searchRev,
-					value = searchQuery,
-					placeholder = noctalia.tr("search_placeholder"),
-					controlSize = "sm",
+				ui.row({
+					gap = 6,
+					align = "center",
+					fill = "surface_variant/0.5",
+					radius = 8,
+					paddingH = 8,
+					height = 32,
 					flexGrow = 1,
-					focus = wantsFocus,
-					onChange = "_onSearchChanged",
-					onSubmit = "_onSearchSubmit",
+				}, {
+					ui.glyph({
+						name = "search",
+						size = 14,
+						color = "on_surface_variant",
+					}),
+					ui.input({
+						key = "search-input-" .. searchRev,
+						value = searchQuery,
+						placeholder = noctalia.tr("search_placeholder"),
+						controlSize = "sm",
+						frameVisible = false,
+						flexGrow = 1,
+						focus = wantsFocus,
+						onChange = "_onSearchChanged",
+						onSubmit = "_onSearchSubmit",
+					}),
 				}),
 				ui.button({
 					key = "toggle-edit-mode",
@@ -784,7 +800,14 @@ local function formView()
 			}),
 		}),
 
-		ui.row({ gap = 8, align = "center" }, {
+		ui.row({
+			gap = 8,
+			align = "center",
+			fill = "surface_variant/0.5",
+			radius = 8,
+			paddingH = 8,
+			height = 32,
+		}, {
 			ui.glyph({
 				name = draftGlyph ~= "" and draftGlyph or (isFolder and "folder" or "bookmark"),
 				size = 18,
@@ -795,6 +818,7 @@ local function formView()
 				value = draftGlyph,
 				placeholder = noctalia.tr("entry_form.glyph_field"),
 				controlSize = "sm",
+				frameVisible = false,
 				flexGrow = 1,
 				onChange = "_onGlyphChange",
 			}),
