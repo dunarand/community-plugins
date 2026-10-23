@@ -122,12 +122,12 @@ end
 -- drop that wouldn't change order, and rolls back on write failure.
 local function moveEntryTo(list, fromIndex, beforeIndex)
 	if fromIndex < 1 or fromIndex > #list then
-		return
+		return false
 	end
 	-- Dropping onto the gap immediately above or below your own row is a
 	-- no-op, not a "move to the other side of yourself".
 	if beforeIndex == fromIndex or beforeIndex == fromIndex + 1 then
-		return
+		return false
 	end
 
 	local snapshot = snapshotArray(list)
@@ -146,7 +146,9 @@ local function moveEntryTo(list, fromIndex, beforeIndex)
 			noctalia.tr("title"),
 			noctalia.tr("err.reorder_failed", { error = err })
 		)
+		return false
 	end
+	return true
 end
 
 -- Moves a single bookmark (never a folder - nesting stays one level deep)
@@ -1313,6 +1315,12 @@ function _onDeleteEntry(index)
 		render()
 		return
 	end
+	if #list == 0 then
+		selectedIndex = nil
+	elseif selectedIndex ~= nil then
+		selectedIndex = math.clamp(selectedIndex, 1, #list)
+	end
+	rememberSelection(currentFolder)
 	render()
 end
 
@@ -1358,7 +1366,11 @@ end
 --   - ctrl+f focuses the search box (root view only, since folders don't
 --     have one).
 --   - ctrl+n opens the new-bookmark form.
---     root-only - same restriction as the "New Folder" button).
+--   - ctrl+shift+n opens the new-folder form (root-only).
+--   - ctrl+e opens the edit form for the selected bookmark/folder (or folder header).
+--   - ctrl+d deletes the selected bookmark/folder (or folder).
+--   - ctrl+shift+k/up moves the selected bookmark/folder up by one.
+--   - ctrl+shift+j/down moves the selected bookmark/folder down by one.
 -- Only acts on key-down (pressed == true) so each chord fires once per press.
 function onKey(chord, pressed)
 	if not pressed then
@@ -1377,6 +1389,13 @@ function onKey(chord, pressed)
 		return
 	end
 
+	if chord == "ctrl+shift+n" then
+		if currentFolder == nil then
+			_onNewFolder()
+		end
+		return
+	end
+
 	if chord == "ctrl+n" then
 		_onNewBookmark()
 		return
@@ -1390,6 +1409,59 @@ function onKey(chord, pressed)
 	end
 
 	local rows = visibleRows()
+
+	if chord == "ctrl+e" then
+		local row = selectedIndex and rows[selectedIndex]
+		if row ~= nil and row.kind == "entry" then
+			_onEditEntry(row.index)
+		elseif currentFolder ~= nil then
+			_onEditFolderHeader()
+		end
+		return
+	end
+
+	if chord == "ctrl+d" then
+		local row = selectedIndex and rows[selectedIndex]
+		if row ~= nil and row.kind == "entry" then
+			_onDeleteEntry(row.index)
+		elseif currentFolder ~= nil then
+			_onDeleteFolder()
+		end
+		return
+	end
+
+	if chord == "ctrl+shift+k" or chord == "ctrl+shift+up" then
+		local row = selectedIndex and rows[selectedIndex]
+		if row ~= nil and row.kind == "entry" then
+			local fromIndex = row.index
+			if fromIndex > 1 then
+				local list = activeList()
+				if moveEntryTo(list, fromIndex, fromIndex - 1) then
+					selectedIndex = fromIndex - 1
+					rememberSelection(currentFolder)
+					render()
+				end
+			end
+		end
+		return
+	end
+
+	if chord == "ctrl+shift+j" or chord == "ctrl+shift+down" then
+		local row = selectedIndex and rows[selectedIndex]
+		if row ~= nil and row.kind == "entry" then
+			local fromIndex = row.index
+			local list = activeList()
+			if fromIndex < #list then
+				if moveEntryTo(list, fromIndex, fromIndex + 2) then
+					selectedIndex = fromIndex + 1
+					rememberSelection(currentFolder)
+					render()
+				end
+			end
+		end
+		return
+	end
+
 	local count = #rows
 	if count == 0 then
 		selectedIndex = nil
