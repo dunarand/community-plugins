@@ -206,3 +206,19 @@ The plugin itself has the following settings:
 - Fixed the issue where keyboard navigation would not auto-scroll. The issue has been fixed with
   changes introduced with Noctalia v5.3.0 plugin API 33 so newer versions of bookmarks, including
   this patch, now requires Noctalia v5.3.0 or higher
+
+### v1.4.0
+
+- Added keyboard shortcuts for managing bookmarks without touching the mouse:
+  - `CTRL + SHIFT + N` to create a new folder
+  - `CTRL + E` to edit the selected bookmark or folder
+  - `CTRL + D` to delete the selected item (requires a quick double press so you don't delete things by accident)
+  - `CTRL + SHIFT + K` / `Shift + Up` and `CTRL + SHIFT + J` / `Shift + Down` to reorder items up and down
+- Overhauled edit mode layout and styling:
+  - Fixed row heights and spacing so entries don't blow up in size compared to normal view
+  - Folders in edit mode no longer have the clunky red border box and badge styling
+  - Shrunk action buttons into compact ghost buttons that fit neatly on the right
+- Dropped the `nohup` dependency for running bookmarks in the background, switching to Noctalia's native fire-and-forget async runner
+- Added a direct settings shortcut button to the panel header
+- Fixed a UI glitch where ghost boxes or action buttons would bleed over when switching views
+- Fixed an `unknown fontWeight 'regular'` warning in the console
