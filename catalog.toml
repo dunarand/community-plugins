@@ -2532,8 +2532,8 @@ tags = ["bar", "panel", "service", "hardware", "utility", "umbriel"]
 [[plugin]]
 id = "nightwatch75/claude-cockpit"
 name = "Claude Cockpit"
-version = "1.1.1"
-updated_at = 1792681646
+version = "1.1.2"
+updated_at = 1792761483
 added_at = 1789089483
 author = "nightwatch75"
 license = "MIT"
@@ -3923,15 +3923,21 @@ tags = ["desktop", "audio", "animation"]
 [[plugin]]
 id = "bagusk99/super-caffeine"
 name = "Super Caffeine"
-version = "1.0.0"
-updated_at = 1792683248
+version = "1.0.1"
+updated_at = 1792758206
 added_at = 1792683248
 author = "bagusk99"
 license = "MIT"
 icon = "coffee"
 description = "One toggle for full stay-awake: Noctalia caffeine (no idle lock/sleep) plus a lid inhibitor (lid close won't suspend)."
-plugin_api = 3
+plugin_api = 17
 tags = ["bar", "indicator", "productivity", "service", "shortcut", "system", "utility"]
+
+[[plugin.release]]
+plugin_api = 3
+version = "1.0.0"
+updated_at = 1792683248
+rev = "4d2e9838f756ca4ebe5a599b76e3920f0650ff93"
 
 [[plugin]]
 id = "zhangdm/inhibit-idle-while-watching"
