@@ -327,6 +327,7 @@ local function entryRow(entry, index)
 		table.insert(
 			trailing,
 			ui.button({
+				key = "entry-open-" .. index,
 				glyph = "chevron-right",
 				variant = "ghost",
 				controlSize = "sm",
@@ -340,6 +341,7 @@ local function entryRow(entry, index)
 	if not isFolder and editMode then
 		trailing = {
 			ui.button({
+				key = "entry-edit-" .. index,
 				glyph = "pencil",
 				variant = "secondary",
 				controlSize = "sm",
@@ -349,6 +351,7 @@ local function entryRow(entry, index)
 				end,
 			}),
 			ui.button({
+				key = "entry-del-" .. index,
 				glyph = "trash",
 				variant = "destructive",
 				controlSize = "sm",
@@ -474,13 +477,10 @@ local function searchResultRow(result, rowIndex)
 	end
 
 	local children = {
-		ui.button({
-			glyph = entry.glyph or "bookmark",
-			variant = "ghost",
-			glyphSize = 16,
-			width = 24,
-			height = 24,
-			onClick = runEntry,
+		ui.glyph({
+			name = entry.glyph or "bookmark",
+			size = 16,
+			color = "on_surface",
 		}),
 		ui.label({
 			text = entry.label or "",
@@ -529,8 +529,9 @@ local function listView()
 		local folder = bookmarks[currentFolder]
 		table.insert(
 			children,
-			ui.row({ gap = 8, align = "center" }, {
+			ui.row({ key = "folder-header-row", gap = 8, align = "center" }, {
 				ui.button({
+					key = "back-to-root",
 					glyph = "chevron-left",
 					variant = "ghost",
 					controlSize = "sm",
@@ -538,6 +539,7 @@ local function listView()
 					onClick = "_onBackToRoot",
 				}),
 				ui.row({
+					key = "folder-title-row",
 					gap = 6,
 					align = "center",
 					flexGrow = 1,
@@ -586,8 +588,9 @@ local function listView()
 		focusSearchOnRender = false
 		table.insert(
 			children,
-			ui.row({ gap = 8, align = "center" }, {
+			ui.row({ key = "search-header-row", gap = 8, align = "center" }, {
 				ui.row({
+					key = "search-input-box",
 					gap = 6,
 					align = "center",
 					fill = "surface_variant/0.5",
@@ -699,7 +702,7 @@ local function listView()
 		)
 	end
 
-	table.insert(children, ui.row({ gap = 8 }, topButtons))
+	table.insert(children, ui.row({ key = "top-action-buttons", gap = 8 }, topButtons))
 
 	-- Inside a folder, edit mode always offers a way to drop a bookmark back
 	-- out to root - including when the folder is currently empty, so it
@@ -784,7 +787,7 @@ local function formView()
 	end
 
 	local children = {
-		ui.row({ align = "center", justify = "space_between" }, {
+		ui.row({ key = "form-header-row", align = "center", justify = "space_between" }, {
 			ui.label({
 				text = title,
 				fontSize = 15,
@@ -793,6 +796,7 @@ local function formView()
 				flexGrow = 1,
 			}),
 			ui.button({
+				key = "form-close-button",
 				glyph = "close",
 				variant = "ghost",
 				tooltip = noctalia.tr("entry_form.cancel_button"),
@@ -801,6 +805,7 @@ local function formView()
 		}),
 
 		ui.row({
+			key = "form-glyph-row",
 			gap = 8,
 			align = "center",
 			fill = "surface_variant/0.5",
@@ -897,13 +902,15 @@ local function formView()
 
 	table.insert(
 		children,
-		ui.row({ gap = 8, justify = "end" }, {
+		ui.row({ key = "form-bottom-buttons", gap = 8, justify = "end" }, {
 			ui.button({
+				key = "form-save-button",
 				text = noctalia.tr("entry_form.save_button"),
 				variant = "primary",
 				onClick = "_onSaveBookmark",
 			}),
 			ui.button({
+				key = "form-cancel-button",
 				text = noctalia.tr("entry_form.cancel_button"),
 				variant = "destructive",
 				onClick = "_onCancelBookmark",
