@@ -18,6 +18,10 @@ local focusSearchOnRender = false -- one-shot: grabs the search input on the nex
 
 local selectedIndex = nil -- 1-based position within the currently visible list, or nil
 
+local DELETE_DOUBLE_PRESS_MS = 600 -- max delay between presses to confirm deletion
+local lastDeletePressTime = 0
+local lastDeleteTargetKey = nil
+
 -- Last selected index per scope, keyed by currentFolder (0 for root, since
 -- folder indices start at 1). Restores position when re-entering a folder
 -- or coming back to root instead of resetting to 1.
@@ -435,7 +439,7 @@ local function entryRow(entry, index)
 			text = entry.label or "",
 			fontSize = 13,
 			color = isSelected and "primary" or "on_surface",
-			fontWeight = isSelected and "bold" or "regular",
+			fontWeight = isSelected and "bold" or nil,
 			flexGrow = 1,
 			maxLines = 1,
 		})
@@ -488,7 +492,7 @@ local function searchResultRow(result, rowIndex)
 			text = entry.label or "",
 			fontSize = 13,
 			color = isSelected and "primary" or "on_surface",
-			fontWeight = isSelected and "bold" or "regular",
+			fontWeight = isSelected and "bold" or nil,
 			flexGrow = 1,
 			maxLines = 1,
 		}),
@@ -975,6 +979,8 @@ function _onOpenFolder(index)
 	if entry == nil or entryType(entry) ~= "folder" then
 		return
 	end
+	lastDeletePressTime = 0
+	lastDeleteTargetKey = nil
 	-- Remember where we were in root before diving into the folder.
 	rememberSelection(currentFolder)
 	-- currentFolder is only ever set from root (folders are one level deep),
@@ -985,6 +991,8 @@ function _onOpenFolder(index)
 end
 
 function _onBackToRoot()
+	lastDeletePressTime = 0
+	lastDeleteTargetKey = nil
 	-- Remember where we were inside the folder before leaving it.
 	rememberSelection(currentFolder)
 	currentFolder = nil
@@ -1344,6 +1352,8 @@ function onOpen(context)
 	searchRev += 1
 	selectedIndex = 1
 	rememberedSelection = {}
+	lastDeletePressTime = 0
+	lastDeleteTargetKey = nil
 	loadBookmarks()
 	noctalia.state.set(shared.STATE_OPEN, true)
 	if context == "search" then
@@ -1368,7 +1378,7 @@ end
 --   - ctrl+n opens the new-bookmark form.
 --   - ctrl+shift+n opens the new-folder form (root-only).
 --   - ctrl+e opens the edit form for the selected bookmark/folder (or folder header).
---   - ctrl+d deletes the selected bookmark/folder (or folder).
+--   - ctrl+d (double press within 600ms) deletes the selected bookmark/folder (or folder).
 --   - ctrl+shift+k/up moves the selected bookmark/folder up by one.
 --   - ctrl+shift+j/down moves the selected bookmark/folder down by one.
 -- Only acts on key-down (pressed == true) so each chord fires once per press.
@@ -1422,10 +1432,27 @@ function onKey(chord, pressed)
 
 	if chord == "ctrl+d" then
 		local row = selectedIndex and rows[selectedIndex]
+		local targetKey = nil
 		if row ~= nil and row.kind == "entry" then
-			_onDeleteEntry(row.index)
+			targetKey = "entry:" .. tostring(currentFolder or 0) .. ":" .. tostring(row.index)
 		elseif currentFolder ~= nil then
-			_onDeleteFolder()
+			targetKey = "folder:" .. tostring(currentFolder)
+		end
+
+		if targetKey ~= nil then
+			local now = noctalia.nowMs()
+			if lastDeleteTargetKey == targetKey and (now - lastDeletePressTime) <= DELETE_DOUBLE_PRESS_MS then
+				lastDeletePressTime = 0
+				lastDeleteTargetKey = nil
+				if row ~= nil and row.kind == "entry" then
+					_onDeleteEntry(row.index)
+				elseif currentFolder ~= nil then
+					_onDeleteFolder()
+				end
+			else
+				lastDeletePressTime = now
+				lastDeleteTargetKey = targetKey
+			end
 		end
 		return
 	end

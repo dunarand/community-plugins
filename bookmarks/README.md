@@ -44,7 +44,7 @@ You can interact with the bookmarks list via keybinds:
 | `CTRL + N`                               | New bookmark                                                     |
 | `CTRL + SHIFT + N`                       | New folder                                                       |
 | `CTRL + E`                               | Edit the selected bookmark or folder                             |
-| `CTRL + D`                               | Delete the selected bookmark or folder                           |
+| `CTRL + D` (double press)                | Delete the selected bookmark or folder                           |
 | `CTRL + SHIFT + K` or Shift + Up Arrow   | Move the selected item one up                                    |
 | `CTRL + SHIFT + J` or Shift + Down Arrow | Move the selected item one down                                  |
 | `Enter` / `Return`                       | Execute the selected bookmark's command / Navigate into a folder |
