@@ -1,22 +1,7 @@
--- Prefer the user-configured data_path setting; fall back to the plugin's
--- own persistent data directory when unset.
-local function resolveDataPath()
-	local configured = noctalia.getConfig("data_path")
-	if type(configured) == "string" and noctalia.string.trim(configured) ~= "" then
-		return noctalia.expandPath(noctalia.string.trim(configured)), nil
-	end
+local shared = require("./shared.luau")
 
-	local dataDir, dataDirErr = noctalia.pluginDataDir()
-	if dataDir == nil then
-		return nil, dataDirErr
-	end
-	return dataDir .. "/data.json", nil
-end
-
-local path, pathErr = resolveDataPath()
-if path == nil then
-	noctalia.log("bookmarks: could not resolve data path: " .. tostring(pathErr))
-end
+local entryType = shared.entryType
+local parseBool = shared.parseBool
 
 local view = "list" -- "list" | "new"
 local formRev = 0
@@ -60,15 +45,6 @@ local draftError = nil
 local editingIndex = nil -- nil = creating new, number = editing the entry at that index in the active list
 local editingRoot = false -- true when editingIndex refers to `bookmarks` (root) instead of activeList()
 
--- Coerces native booleans, string coercions, and UI event objects into a
--- strict boolean, as required by ui.toggle's `checked` prop.
-local function parseBool(val)
-	if type(val) == "table" then
-		return val.checked == true or val.value == true
-	end
-	return val == true or val == "true" or val == 1
-end
-
 -- Returns the array we're currently viewing/editing: root, or the open
 -- folder's items. Falls back to root if currentFolder points at something
 -- that's gone (e.g. deleted from under us).
@@ -85,10 +61,6 @@ local function activeList()
 	return folder.items
 end
 
-local function entryType(entry)
-	return entry.type == "folder" and "folder" or "bookmark"
-end
-
 -- Fuzzy-searches bookmark labels only (not commands, not folder names)
 -- across root and every folder's contents, using Noctalia's native
 -- matcher. Returns results sorted best-match-first, each as
@@ -102,24 +74,10 @@ local function searchBookmarks(query)
 	end
 
 	local results = {}
-	for _, entry in ipairs(bookmarks) do
-		if entryType(entry) == "folder" then
-			for _, subEntry in ipairs(entry.items or {}) do
-				if entryType(subEntry) ~= "folder" then
-					local score = noctalia.fuzzyScore(trimmed, subEntry.label or "")
-					if score ~= nil then
-						table.insert(
-							results,
-							{ entry = subEntry, path = entry.label or "", score = score }
-						)
-					end
-				end
-			end
-		else
-			local score = noctalia.fuzzyScore(trimmed, entry.label or "")
-			if score ~= nil then
-				table.insert(results, { entry = entry, path = nil, score = score })
-			end
+	for _, item in ipairs(shared.flatten(bookmarks)) do
+		local score = noctalia.fuzzyScore(trimmed, item.entry.label or "")
+		if score ~= nil then
+			table.insert(results, { entry = item.entry, path = item.path, score = score })
 		end
 	end
 
@@ -130,44 +88,13 @@ local function searchBookmarks(query)
 end
 
 local function loadBookmarks()
-	if path == nil then
-		bookmarks = {}
-		return
-	end
-	if not noctalia.fileExists(path) then
-		bookmarks = {}
-		listError = nil
-		return
-	end
-	local raw, readErr = noctalia.readFile(path)
-	if raw == nil then
-		bookmarks = {}
-		listError = noctalia.tr("err.read_failed", { error = tostring(readErr) })
-		return
-	end
-	local decoded, decodeErr = noctalia.json.decode(raw)
-	if type(decoded) ~= "table" then
-		bookmarks = {}
-		listError = noctalia.tr("err.corrupt", { error = tostring(decodeErr) })
-		return
-	end
-	bookmarks = decoded
-	listError = nil
+	local data, err = shared.loadBookmarks()
+	bookmarks = data
+	listError = err
 end
 
 local function saveBookmarks()
-	if path == nil then
-		return false, noctalia.tr("err.no_data_dir")
-	end
-	local encoded, encodeErr = noctalia.json.encode(bookmarks)
-	if encoded == nil then
-		return false, tostring(encodeErr)
-	end
-	local ok, writeErr = noctalia.writeFile(path, encoded)
-	if not ok then
-		return false, tostring(writeErr)
-	end
-	return true, nil
+	return shared.saveBookmarks(bookmarks)
 end
 
 local function snapshotArray(list)
@@ -251,50 +178,8 @@ local function moveEntryAcross(fromList, fromIndex, toList)
 	return true, entry
 end
 
--- Runs a bookmark's command. Two distinct failure paths get a notification:
--- the shell couldn't even be spawned, or it ran and exited non-zero.
--- Success stays silent, same as file-search's xdg-open.
 local function runBookmark(entry)
-	local cmd = entry.cmd
-	if type(cmd) ~= "string" or cmd == "" then
-		noctalia.notifyError(noctalia.tr("title"), noctalia.tr("err.no_command"))
-		return
-	end
-	local label = entry.label or cmd
-
-	if parseBool(entry.runInTerminal) then
-		noctalia.runInTerminal(cmd)
-		return
-	end
-
-	local finalCmd = cmd
-	if parseBool(entry.runInBackground) then
-		finalCmd = "nohup " .. cmd .. " >/dev/null 2>&1 &"
-	end
-
-	local ok = noctalia.runAsync(finalCmd, function(result)
-		if parseBool(entry.runInBackground) then
-			return
-		end
-
-		if result.exitCode ~= 0 then
-			local detail = noctalia.string.trim(result.stderr or "")
-			local msg =
-				noctalia.tr("err.exit_code", { label = label, code = tostring(result.exitCode) })
-			if detail ~= "" then
-				msg = msg .. ": " .. detail
-			end
-			noctalia.notifyError(noctalia.tr("title"), msg)
-		end
-		-- exitCode == 0: succeeded, no notification
-	end)
-
-	if not ok then
-		noctalia.notifyError(
-			noctalia.tr("title"),
-			noctalia.tr("err.launch_failed", { label = label })
-		)
-	end
+	shared.runBookmark(entry)
 end
 
 -- Runs a bookmark and closes the panel, the standard "user picked a
@@ -725,6 +610,7 @@ local function listView()
 		return ui.column({ gap = 10, padding = 14, flexGrow = 1 }, children)
 	end
 
+	local canAdd = shared.resolveDataPath() ~= nil
 	local topButtons = {
 		ui.button({
 			key = "new-bookmark",
@@ -732,7 +618,7 @@ local function listView()
 			glyph = "plus",
 			variant = "primary",
 			flexGrow = 1,
-			enabled = path ~= nil,
+			enabled = canAdd,
 			onClick = "_onNewBookmark",
 		}),
 	}
@@ -748,7 +634,7 @@ local function listView()
 				glyph = "folder-plus",
 				variant = "secondary",
 				flexGrow = 1,
-				enabled = path ~= nil,
+				enabled = canAdd,
 				onClick = "_onNewFolder",
 			})
 		)
@@ -1388,7 +1274,7 @@ function onOpen(context)
 	selectedIndex = 1
 	rememberedSelection = {}
 	loadBookmarks()
-	noctalia.state.set("bookmarks_open", true)
+	noctalia.state.set(shared.STATE_OPEN, true)
 	if context == "search" then
 		focusSearchOnRender = true
 	end
@@ -1396,7 +1282,7 @@ function onOpen(context)
 end
 
 function onClose()
-	noctalia.state.set("bookmarks_open", false)
+	noctalia.state.set(shared.STATE_OPEN, false)
 end
 
 -- Keyboard navigation:
