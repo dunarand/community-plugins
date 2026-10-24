@@ -38,6 +38,17 @@ local function recallSelection(folder, rowCount)
 	return math.min(math.max(rememberedSelection[folder or 0] or 1, 1), rowCount)
 end
 
+local function clampSelection(list)
+	if #list == 0 then
+		selectedIndex = nil
+	elseif selectedIndex == nil then
+		selectedIndex = 1
+	else
+		selectedIndex = math.clamp(selectedIndex, 1, #list)
+	end
+	rememberSelection(currentFolder)
+end
+
 local draftKind = "bookmark" -- "bookmark" | "folder", set when the form opens
 local draftGlyph = "bookmark"
 local draftLabel = ""
@@ -1185,6 +1196,10 @@ function _onSaveBookmark()
 		noctalia.tr("title"),
 		noctalia.tr(editingIndex ~= nil and "entry_updated" or "entry_saved", { label = label })
 	)
+	if editingIndex == nil and not editingRoot then
+		selectedIndex = #list
+		rememberSelection(currentFolder)
+	end
 	editingIndex = nil
 	editingRoot = false
 	view = "list"
@@ -1241,7 +1256,10 @@ function _onReorderEntry(payload, target)
 			return
 		end
 		folder.items = folder.items or {}
-		moveEntryAcross(bookmarks, fromIndex, folder.items)
+		if moveEntryAcross(bookmarks, fromIndex, folder.items) then
+			rememberedSelection = { [0] = rememberedSelection[0] }
+			clampSelection(bookmarks)
+		end
 		render()
 		return
 	end
@@ -1253,7 +1271,9 @@ function _onReorderEntry(payload, target)
 			return
 		end
 		local list = activeList()
-		moveEntryAcross(list, fromIndex, bookmarks)
+		if moveEntryAcross(list, fromIndex, bookmarks) then
+			clampSelection(list)
+		end
 		render()
 		return
 	end
@@ -1304,12 +1324,10 @@ function _onDeleteEntry(index)
 		render()
 		return
 	end
-	if #list == 0 then
-		selectedIndex = nil
-	elseif selectedIndex ~= nil then
-		selectedIndex = math.clamp(selectedIndex, 1, #list)
+	if currentFolder == nil then
+		rememberedSelection = { [0] = rememberedSelection[0] }
 	end
-	rememberSelection(currentFolder)
+	clampSelection(list)
 	render()
 end
 
@@ -1331,11 +1349,11 @@ function onOpen(context)
 	currentFolder = nil
 	searchQuery = ""
 	searchRev += 1
-	selectedIndex = 1
 	rememberedSelection = {}
 	lastDeletePressTime = 0
 	lastDeleteTargetKey = nil
 	loadBookmarks()
+	selectedIndex = #bookmarks > 0 and 1 or nil
 	noctalia.state.set(shared.STATE_OPEN, true)
 	if context == "search" then
 		focusSearchOnRender = true
@@ -1369,6 +1387,11 @@ function onKey(chord, pressed)
 	end
 	if view ~= "list" then
 		return
+	end
+
+	if chord ~= "ctrl+d" then
+		lastDeletePressTime = 0
+		lastDeleteTargetKey = nil
 	end
 
 	if chord == "ctrl+f" then
@@ -1405,7 +1428,7 @@ function onKey(chord, pressed)
 		local row = selectedIndex and rows[selectedIndex]
 		if row ~= nil and row.kind == "entry" then
 			_onEditEntry(row.index)
-		elseif currentFolder ~= nil then
+		elseif currentFolder ~= nil and #rows == 0 then
 			_onEditFolderHeader()
 		end
 		return
@@ -1416,7 +1439,7 @@ function onKey(chord, pressed)
 		local targetKey = nil
 		if row ~= nil and row.kind == "entry" then
 			targetKey = "entry:" .. tostring(currentFolder or 0) .. ":" .. tostring(row.index)
-		elseif currentFolder ~= nil then
+		elseif currentFolder ~= nil and #rows == 0 then
 			targetKey = "folder:" .. tostring(currentFolder)
 		end
 
@@ -1427,7 +1450,7 @@ function onKey(chord, pressed)
 				lastDeleteTargetKey = nil
 				if row ~= nil and row.kind == "entry" then
 					_onDeleteEntry(row.index)
-				elseif currentFolder ~= nil then
+				elseif currentFolder ~= nil and #rows == 0 then
 					_onDeleteFolder()
 				end
 			else

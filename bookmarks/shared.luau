@@ -103,13 +103,10 @@ function M.runBookmark(entry)
 	end
 	local label = entry.label or cmd
 
-	if M.parseBool(entry.runInTerminal) then
-		noctalia.runInTerminal(cmd)
-		return true
-	end
-
 	local ok
-	if M.parseBool(entry.runInBackground) then
+	if M.parseBool(entry.runInTerminal) then
+		ok = noctalia.runInTerminal(cmd)
+	elseif M.parseBool(entry.runInBackground) then
 		ok = noctalia.runAsync(cmd)
 	else
 		ok = noctalia.runAsync(cmd, function(result)
